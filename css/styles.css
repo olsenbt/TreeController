@@ -1,0 +1,214 @@
+#navbar {
+    bottom: 0px;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+    padding: 10px 20px;
+}
+
+#topNav {
+    height: 180px;
+    top: -100px;
+    margin-bottom: 50px;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#navbar, #topNav {
+    position: fixed;
+    width: 100%;
+    background-color: rgb(129, 180, 127);
+    z-index: 1000;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+#searchBar {
+    position: absolute;
+    left: 5px;
+    bottom: 25px;
+    padding: 5px;
+    box-sizing: border-box;
+    border: 0px solid;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    width: 140px;
+    background-color: rgb(239, 255, 248);
+}
+
+#colorSelectorPage {
+    margin-top: 25px;
+    justify-content: center;
+}
+
+.nav-item {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-left: 25px;
+    padding-right: 25px;
+    padding-top: 10px;
+}
+
+.nav-item i, .nav-item img {
+    margin-bottom: 0px;
+    font-size: 30px;
+}
+
+.nav-item img {
+    width: 35px;
+}
+
+
+html {
+    font-family: 'Roboto', sans-serif;
+    width: 100%;
+    height: 80%;
+    background-color: rgb(242, 242, 242);
+}
+
+body {
+    padding-top: 90px;
+    /* Adjust the value based on the height of your navbar */
+    margin-left: 0px;
+    height: 100%;
+
+}
+
+.center {
+    margin: auto;
+    width: 50%;
+    text-align: center;
+}
+
+.nav-item.active {
+    filter: hue-rotate(90deg);
+}
+
+#loginPage h1 {
+    padding-top: 20px;
+    padding-bottom: 10px;
+}
+
+#buttonsPage {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+#buttonsPage button {
+    margin: 10px;
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    /* Green background color */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    height: 50px;
+    width: 170px;
+}
+
+#buttonsPage button.activeButton {
+    background-color: #2eacfa;
+}
+
+#powerDiv {
+    position: relative;
+    display: inline-block;
+    bottom: -50px;
+}
+
+#stopButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 55px;
+    width: 55px;
+    background-color: #abff7e;
+    border-radius: 50%;
+    border: none; /* Remove border */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add a soft box shadow */
+}
+
+#stopButton.activeButton {
+    background-color: #d8d8d8;
+}
+
+#powerButton {
+    position: relative;
+    font-size: 40px;
+}
+
+#powerButton.activeButton {
+    color: white;
+}
+
+
+/*From Pokemon App*/
+#pokedex {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+.color {
+    padding: 50px;
+    width: 20%;
+    border-color: #333;
+    border-style: solid;
+}
+
+.card:hover {
+    background-color: rgb(239, 255, 248);
+}
+
+#randomPokemon {
+    cursor: pointer;
+    font-size: 24px;
+    user-select: none;
+    padding: 5px;
+    border-radius: 10px;
+    height: 25px;
+    width: 25px;
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    background-color: rgb(239, 255, 248);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#randomPokemon:hover {
+    background-color: #cbf7d2;
+    /* Change the color on hover as desired */
+}
