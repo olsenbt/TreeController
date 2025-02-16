@@ -166,6 +166,28 @@ function setLights(r, g, b) {
     });
 }
 
+function setLights2(r, g, b) {
+  clearActive();
+  // Update the apiUrl with the new API endpoint and IP address
+  var apiUrl = `https://bennettolsen.us:5000/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
+
+  // Send a GET request to the updated API endpoint
+  fetch(apiUrl)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      return response.text();
+    })
+    .then(result => {
+      console.log(result);
+    })
+    .catch(error => {
+      console.error(error);
+      alert(`Error executing Set Lights script: ${error.message}`);
+    });
+}
+
 function debounce(func, delay) {
   let timeout;
   return function () {
@@ -344,7 +366,7 @@ function handlePokemonClick(id) {
       // Get the color information for the clicked Pokémon ID
       const colors = pokemonColors[id].map(color => color.replace('#', ''));
 
-      const apiUrl = `https://bennettolsen.us:5000/set_colors?password=candycane72&color1=${colors[0]}&color2=${colors[1]}&color3=${colors[2]}`;
+      const apiUrl = `https://bennettolsen.us:5000/set_colors?password=${localStorage.getItem('password')}&color1=${colors[0]}&color2=${colors[1]}&color3=${colors[2]}`;
       console.log(apiUrl);
       fetch(apiUrl)
         .then(apiResponse => {
