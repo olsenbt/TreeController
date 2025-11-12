@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     showLoginPage();
   }
 
-  var apiUrl = 'https://bennettolsen.us:5000/status';
+  var apiUrl = 'https://api.bennettolsen.us/status';
 
   // Send a GET request to the updated API endpoint
   fetch(apiUrl)
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function setLights(r, g, b) {
   clearActive();
   // Update the apiUrl with the new API endpoint and IP address
-  var apiUrl = `https://bennettolsen.us:5000/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
+  var apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
 
   // Send a GET request to the updated API endpoint
   fetch(apiUrl)
@@ -169,7 +169,7 @@ function setLights(r, g, b) {
 function setLights2(r, g, b) {
   clearActive();
   // Update the apiUrl with the new API endpoint and IP address
-  var apiUrl = `https://bennettolsen.us:5000/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
+  var apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
 
   // Send a GET request to the updated API endpoint
   fetch(apiUrl)
@@ -223,10 +223,14 @@ function showPage(pageId) {
 
 function runScript(scriptName) {
   // Update the apiUrl with the new API endpoint and IP address
-  let apiUrl = `https://bennettolsen.us:5000/run_script?password=${localStorage.getItem('password')}&script=${scriptName}`;
+  let apiUrl = `https://api.bennettolsen.us/run_script?password=${localStorage.getItem('password')}&script=${scriptName}`;
 
   if (scriptName == "warm") {
-    apiUrl = `https://bennettolsen.us:5000/set_lights?password=${localStorage.getItem('password')}&r=215&g=185&b=50`; //185, 215, 50
+    apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=215&g=185&b=50`; //185, 215, 50
+  } else if (scriptName == "red_green") {
+    apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=00ff00&color2=ff0000`;
+  } else if (scriptName == "huskies") {
+    apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=32006E&color2=FFEB82`;
   }
 
   // Send a GET request to the updated API endpoint
@@ -366,7 +370,7 @@ function handlePokemonClick(id) {
       // Get the color information for the clicked Pokémon ID
       const colors = pokemonColors[id].map(color => color.replace('#', ''));
 
-      const apiUrl = `https://bennettolsen.us:5000/set_colors?password=${localStorage.getItem('password')}&color1=${colors[0]}&color2=${colors[1]}&color3=${colors[2]}`;
+      const apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=${colors[0]}&color2=${colors[1]}&color3=${colors[2]}`;
       console.log(apiUrl);
       fetch(apiUrl)
         .then(apiResponse => {
