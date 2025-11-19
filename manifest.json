@@ -2,10 +2,11 @@
     "name": "Xmas Light Controller",
     "short_name": "LightController",
     "description": "A simple led light controller",
-    "start_url": "/XmasLights",
+    "start_url": "./index.html",
+    "scope": "./",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#000000",
+    "theme_color": "#ffffff",
     "icons": [
       {
         "src": "assets/icon.png",
