@@ -142,6 +142,13 @@ document.addEventListener('DOMContentLoaded', function () {
       console.error(error);
       alert(`Error executing Set Lights script: ${error.message}`);
     });
+  // Initialize advent calendar and render any unlocked advent effects
+  try {
+    initAdvent();
+    renderAdventEffectsGroup();
+  } catch (e) {
+    console.error('Error initializing advent calendar:', e);
+  }
 });
 
 function setLights(r, g, b) {
@@ -438,4 +445,180 @@ function highlightSelectedPokemon(pokemonId) {
     selectedButton.style.backgroundColor = '#3f7539'; // Set the background color as desired
     selectedPokemonId = pokemonId; // Update the selected Pokémon ID
   }
+}
+
+/* Advent calendar logic */
+function loadOpenedDays() {
+  try {
+    const raw = localStorage.getItem('advent_opened');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveOpenedDays(days) {
+  localStorage.setItem('advent_opened', JSON.stringify(days));
+}
+
+function initAdvent() {
+  buildAdventGrid();
+
+  // Modal controls
+  const unlockBtn = document.getElementById('adventUnlockBtn');
+  const closeBtn = document.getElementById('adventCloseBtn');
+
+  if (unlockBtn) {
+    unlockBtn.addEventListener('click', function () {
+      const day = parseInt(unlockBtn.getAttribute('data-day'), 10);
+      unlockDay(day);
+      closeAdvent();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function () {
+      closeAdvent();
+    });
+  }
+}
+
+function buildAdventGrid() {
+  const container = document.getElementById('adventCalendar');
+  if (!container) return;
+  container.innerHTML = '';
+  const opened = loadOpenedDays();
+
+  for (let day = 1; day <= 25; day++) {
+    const cell = document.createElement('div');
+    cell.classList.add('advent-cell');
+    cell.setAttribute('data-day', day);
+    cell.textContent = day;
+
+    const isOpened = opened.indexOf(day) !== -1;
+    const unlocked = isOpened || isDayUnlocked(day);
+
+    if (!unlocked) cell.classList.add('locked');
+    if (isOpened) cell.classList.add('opened');
+
+    if (isOpened) {
+      const badge = document.createElement('div');
+      badge.classList.add('advent-badge');
+      badge.textContent = '✓';
+      cell.appendChild(badge);
+    }
+
+    cell.addEventListener('click', function () {
+      openAdvent(day);
+    });
+
+    container.appendChild(cell);
+  }
+}
+
+function isDayUnlocked(day) {
+  // Check today's date: December days are allowed on or before current date in December
+  const now = new Date();
+  // Allow override for testing via localStorage 'advent_override' as YYYY-MM-DD
+  const override = localStorage.getItem('advent_override');
+  let today = now;
+  if (override) {
+    const o = new Date(override);
+    if (!isNaN(o.getTime())) today = o;
+  }
+
+  // Month is 0-based; December is 11
+  if (today.getMonth() === 10) {
+    return today.getDate() >= day;
+  }
+  return false;
+}
+
+function openAdvent(day) {
+  const opened = loadOpenedDays();
+  const isOpened = opened.indexOf(day) !== -1;
+  const unlocked = isOpened || isDayUnlocked(day);
+
+  const modal = document.getElementById('adventModal');
+  const title = document.getElementById('adventModalTitle');
+  const body = document.getElementById('adventModalBody');
+  const unlockBtn = document.getElementById('adventUnlockBtn');
+
+  if (!modal || !title || !body || !unlockBtn) return;
+
+  title.textContent = `Day ${day}`;
+
+  if (!unlocked) {
+    body.textContent = `This gift is locked until December ${day}.`;
+    unlockBtn.style.display = 'none';
+  } else if (isOpened) {
+    body.textContent = `You've already opened Day ${day}. You can run its effect from the Effects page.`;
+    unlockBtn.style.display = 'none';
+  } else {
+    body.textContent = `Open Day ${day} to unlock a special effect!`;
+    unlockBtn.style.display = 'inline-block';
+    unlockBtn.setAttribute('data-day', day);
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeAdvent() {
+  const modal = document.getElementById('adventModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function unlockDay(day) {
+  const opened = loadOpenedDays();
+  if (opened.indexOf(day) === -1) {
+    opened.push(day);
+    opened.sort((a,b)=>a-b);
+    saveOpenedDays(opened);
+  }
+
+  // Update grid and effects
+  buildAdventGrid();
+  renderAdventEffectsGroup();
+
+  // Optionally auto-run the effect on unlock
+  // runScript(`advent${day}`);
+}
+
+function renderAdventEffectsGroup() {
+  const buttonsPage = document.getElementById('buttonsPage');
+  if (!buttonsPage) return;
+
+  let group = document.getElementById('adventEffectsGroup');
+  if (!group) {
+    group = document.createElement('div');
+    group.id = 'adventEffectsGroup';
+    const header = document.createElement('h3');
+    header.textContent = 'Advent Effects';
+    header.style.width = '100%';
+    header.style.textAlign = 'center';
+    group.appendChild(header);
+    group.style.display = 'flex';
+    group.style.flexWrap = 'wrap';
+    group.style.justifyContent = 'center';
+    group.style.paddingTop = '8px';
+    buttonsPage.appendChild(group);
+  }
+
+  // Clear existing buttons inside group (except header)
+  const header = group.querySelector('h3');
+  group.innerHTML = '';
+  group.appendChild(header);
+
+  const opened = loadOpenedDays();
+  opened.forEach(day => {
+    const btn = document.createElement('button');
+    btn.textContent = `Day ${day}`;
+    btn.className = 'advent-effect-button';
+    btn.addEventListener('click', function () {
+      clearActive();
+      this.classList.add('activeButton');
+      runScript(`advent${day}`);
+    });
+    group.appendChild(btn);
+  });
 }

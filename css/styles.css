@@ -93,25 +93,46 @@ body {
     padding-bottom: 10px;
 }
 
+/* Effects page: force a row-based wrapping flex layout (overrides page-level column) */
 #buttonsPage {
     display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
 }
 
 #buttonsPage button {
-    margin: 10px;
+    margin: 6px;
     padding: 10px 15px;
     background-color: #4CAF50;
-    /* Green background color */
     color: white;
     border: none;
     border-radius: 10px;
     font-size: 16px;
     cursor: pointer;
     height: 50px;
-    width: 170px;
+    flex: 0 0 170px; /* fixed button width but allows wrapping */
+    box-sizing: border-box;
+}
+
+/* Advent effect buttons use the same appearance */
+.advent-effect-button {
+    margin: 6px;
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    height: 50px;
+    flex: 0 0 170px;
+    box-sizing: border-box;
 }
 
 #buttonsPage button.activeButton {
@@ -212,3 +233,127 @@ p {
     background-color: #cbf7d2;
     /* Change the color on hover as desired */
 }
+
+/* Advent calendar styles */
+#adventCalendarContainer {
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.advent-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto 30px auto;
+    justify-items: center;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.advent-cell {
+    background: linear-gradient(180deg, #fff 0%, #f3f3f3 100%);
+    border-radius: 10px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 22px;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    position: relative;
+}
+
+/* Ensure cells have a reasonable width and wrap on small screens */
+.advent-cell {
+    width: 100%;
+    max-width: 120px;
+}
+
+.advent-cell.locked {
+    background: linear-gradient(180deg, #d6e9d6 0%, #cfeacb 100%);
+    filter: grayscale(0.2);
+    opacity: 0.9;
+}
+
+.advent-cell.opened {
+    background: linear-gradient(180deg, #fff7e6 0%, #fff0d1 100%);
+    color: #1e3a2b;
+}
+
+.advent-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: #2eacfa;
+    color: #fff;
+    border-radius: 8px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+/* Modal */
+.advent-modal {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+/* Make page containers stack content vertically and center it when shown via JS */
+[id$="Page"] {
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    padding-bottom: 90px; /* allow space for navbar */
+    box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+    .advent-grid { grid-template-columns: repeat(3, 1fr); }
+    .advent-cell { max-width: 100px; height: 80px; font-size: 18px; }
+}
+
+@media (max-width: 420px) {
+    .advent-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .advent-cell { max-width: 120px; height: 72px; font-size: 16px; }
+}
+
+.advent-modal-content {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+}
+
+.advent-modal-actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#adventUnlockBtn, #adventCloseBtn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+#adventUnlockBtn { background: #4CAF50; color: white; }
+#adventCloseBtn { background: #ddd; }
