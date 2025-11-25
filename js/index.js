@@ -1,5 +1,6 @@
 let currentPage = null;
 let debouncedSetLights = debounce(setLights, 300); // Adjust delay as needed
+let adventContents = []; // Will be loaded from adventContents.json
 
 document.addEventListener('DOMContentLoaded', function () {
   currentPage = localStorage.getItem('password') ? document.getElementById('buttonsPage') : document.getElementById('loginPage');
@@ -144,8 +145,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   // Initialize advent calendar and render any unlocked advent effects
   try {
-    initAdvent();
-    renderAdventEffectsGroup();
+    loadAdventContents().then(() => {
+      initAdvent();
+      renderAdventEffectsGroup();
+    });
   } catch (e) {
     console.error('Error initializing advent calendar:', e);
   }
@@ -448,6 +451,21 @@ function highlightSelectedPokemon(pokemonId) {
 }
 
 /* Advent calendar logic */
+async function loadAdventContents() {
+  try {
+    const response = await fetch('adventContents.json');
+    adventContents = await response.json();
+    console.log('Advent contents loaded:', adventContents);
+  } catch (e) {
+    console.error('Error loading adventContents.json:', e);
+    adventContents = [];
+  }
+}
+
+function getAdventContent(day) {
+  return adventContents.find(item => item.day === day) || { day, name: `Day ${day}`, script: `advent${day}` };
+}
+
 function loadOpenedDays() {
   try {
     const raw = localStorage.getItem('advent_opened');
@@ -538,6 +556,7 @@ function openAdvent(day) {
   const opened = loadOpenedDays();
   const isOpened = opened.indexOf(day) !== -1;
   const unlocked = isOpened || isDayUnlocked(day);
+  const content = getAdventContent(day);
 
   const modal = document.getElementById('adventModal');
   const title = document.getElementById('adventModalTitle');
@@ -546,16 +565,16 @@ function openAdvent(day) {
 
   if (!modal || !title || !body || !unlockBtn) return;
 
-  title.textContent = `Day ${day}`;
+  title.textContent = `Day ${day} - ${content.name}`;
 
   if (!unlocked) {
     body.textContent = `This gift is locked until December ${day}.`;
     unlockBtn.style.display = 'none';
   } else if (isOpened) {
-    body.textContent = `You've already opened Day ${day}. You can run its effect from the Effects page.`;
+    body.textContent = `You've already opened Day ${day}.\n\n🎄 ${content.name}\n\nYou can run this effect from the Effects page.`;
     unlockBtn.style.display = 'none';
   } else {
-    body.textContent = `Open Day ${day} to unlock a special effect!`;
+    body.textContent = `Unlock Day ${day} to get:\n\n🎄 ${content.name}`;
     unlockBtn.style.display = 'inline-block';
     unlockBtn.setAttribute('data-day', day);
   }
@@ -588,37 +607,21 @@ function renderAdventEffectsGroup() {
   const buttonsPage = document.getElementById('buttonsPage');
   if (!buttonsPage) return;
 
-  let group = document.getElementById('adventEffectsGroup');
-  if (!group) {
-    group = document.createElement('div');
-    group.id = 'adventEffectsGroup';
-    const header = document.createElement('h3');
-    header.textContent = 'Advent Effects';
-    header.style.width = '100%';
-    header.style.textAlign = 'center';
-    group.appendChild(header);
-    group.style.display = 'flex';
-    group.style.flexWrap = 'wrap';
-    group.style.justifyContent = 'center';
-    group.style.paddingTop = '8px';
-    buttonsPage.appendChild(group);
-  }
+  // Remove any existing advent buttons
+  buttonsPage.querySelectorAll('.advent-effect-button').forEach(btn => btn.remove());
 
-  // Clear existing buttons inside group (except header)
-  const header = group.querySelector('h3');
-  group.innerHTML = '';
-  group.appendChild(header);
-
+  // Add unlocked advent buttons directly to the main buttons page
   const opened = loadOpenedDays();
   opened.forEach(day => {
+    const content = getAdventContent(day);
     const btn = document.createElement('button');
-    btn.textContent = `Day ${day}`;
+    btn.textContent = content.name;
     btn.className = 'advent-effect-button';
     btn.addEventListener('click', function () {
       clearActive();
       this.classList.add('activeButton');
-      runScript(`advent${day}`);
+      runScript(content.script);
     });
-    group.appendChild(btn);
+    buttonsPage.appendChild(btn);
   });
 }
