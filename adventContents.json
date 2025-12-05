@@ -1,8 +1,8 @@
 [
-  {"day": 1, "name": "Festive Red & Green", "script": "red_green"},
-  {"day": 2, "name": "Rainbow Sparkle", "script": "rainbow"},
-  {"day": 3, "name": "Husky Magic", "script": "huskies"},
-  {"day": 4, "name": "Warm Glow", "script": "warm"},
+  {"day": 1, "name": "Vintage Xmas 🎄", "script": "vintage"},
+  {"day": 2, "name": "Candy Cane 🟥⬜", "script": "stripes"},
+  {"day": 3, "name": "Ocean Blue 🌊", "script": "ocean"},
+  {"day": 4, "name": "Lava Lamp 🌋", "script": "lavalamp"},
   {"day": 5, "name": "Vertical Cascade", "script": "vertical"},
   {"day": 6, "name": "Rainbow Stripes", "script": "rainbowMove"},
   {"day": 7, "name": "Shimmer Shine", "script": "shimmer"},

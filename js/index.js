@@ -245,6 +245,10 @@ function runScript(scriptName) {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=00FF00&color2=0000FF`;
   } else if (scriptName == "vikings") {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=FFC62F&color2=4F2683`;
+  } else if (scriptName == "vintage") {
+    apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=FF0000&color2=0000FF&color3=00FF00&color4=FF6600`;
+  } else if (scriptName == "ocean") {
+    apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=0000FF&color2=00FFFF&color3=0080FF&color4=4096FF`;
   }
 
   // Send a GET request to the updated API endpoint
