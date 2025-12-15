@@ -242,7 +242,7 @@ function runScript(scriptName) {
   } else if (scriptName == "huskies") {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=32006E&color2=FFEB82`;
   } else if (scriptName == "cougars") {
-    apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=A60F2D&color2=4D4D4D`;
+    apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=848A89&color2=AB0003`;
   } else if (scriptName == "seahawks") {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=00FF00&color2=0000FF`;
   } else if (scriptName == "vikings") {
