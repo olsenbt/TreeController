@@ -241,6 +241,8 @@ function runScript(scriptName) {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=00ff00&color2=ff0000`;
   } else if (scriptName == "huskies") {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=32006E&color2=FFEB82`;
+  } else if (scriptName == "cougars") {
+    apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=A60F2D&color2=4D4D4D`;
   } else if (scriptName == "seahawks") {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=00FF00&color2=0000FF`;
   } else if (scriptName == "vikings") {
