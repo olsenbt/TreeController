@@ -5,6 +5,7 @@ const MAX_COLORS = 5;
 let selectedColors = [];
 let activeColorIndex = 0;
 const debouncedSendColors = debounce(sendColorsToApi, 300);
+let lastApiCall = null; // Store the last API call to replay when turning back on
 
 // Move renderColorSlots outside of DOMContentLoaded so it's always accessible
 function renderColorSlots() {
@@ -69,11 +70,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let powerButton = document.getElementById('powerButton');
   powerButton.addEventListener("click", function () {
-    if (!document.getElementById("stopButton").classList.contains("activeButton")) {
+    let stopButton = document.getElementById("stopButton");
+    
+    // If lights are currently off, turn them back on with last command
+    if (stopButton.classList.contains("activeButton")) {
+      if (lastApiCall) {
+        fetch(lastApiCall)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Error: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then(result => {
+            console.log(result);
+            stopButton.classList.remove('activeButton');
+          })
+          .catch(error => {
+            console.error(error);
+            alert(`Error turning lights back on: ${error.message}`);
+          });
+      } else {
+        // No previous state, just turn off the indicator
+        stopButton.classList.remove('activeButton');
+      }
+    } else {
+      // Lights are on, turn them off
       runScript('stop');
       clearActive();
-      let dot = document.getElementById('stopButton');
-      dot.classList.add('activeButton');
+      stopButton.classList.add('activeButton');
     }
   });
 
@@ -228,6 +253,8 @@ function sendColorsToApi() {
     apiUrl += `&color${i + 1}=${color}`;
   });
 
+  lastApiCall = apiUrl; // Store for power button toggle
+
   fetch(apiUrl)
     .then(r => {
       if (!r.ok) {
@@ -247,6 +274,8 @@ function sendColorsToApi() {
 function setLights(r, g, b) {
   clearActive();
   var apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
+
+  lastApiCall = apiUrl; // Store for power button toggle
 
   fetch(apiUrl)
     .then(response => {
@@ -340,6 +369,11 @@ function runScript(scriptName) {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=FF0000&color2=00FF00&color3=FFFFFF`;
   } else if (scriptName == "classic") {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=FF5100&color2=0F3BFF&color3=FF0A0A&color4=FF000D&color5=31FF26`;
+  }
+
+  // Don't store 'stop' command as the last API call
+  if (scriptName !== 'stop') {
+    lastApiCall = apiUrl;
   }
 
   fetch(apiUrl)
@@ -469,6 +503,9 @@ function handlePokemonClick(id) {
       const colors = pokemonColors[id].map(color => color.replace('#', ''));
 
       const apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=${colors[0]}&color2=${colors[1]}&color3=${colors[2]}`;
+      
+      lastApiCall = apiUrl; // Store for power button toggle
+      
       console.log(apiUrl);
       fetch(apiUrl)
         .then(apiResponse => {
