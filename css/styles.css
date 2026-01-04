@@ -241,6 +241,46 @@ p {
     background-color: #cbf7d2;
 }
 
+#multiColorControls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+#colorSlots {
+    display: flex;
+    gap: 10px;
+}
+
+.color-slot {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 2px dashed #999;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.color-slot.filled {
+    border-style: solid;
+}
+
+.color-slot.active {
+    border: 4px solid #333;
+}
+
+#clearColorsBtn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    background-color: #d9534f;
+    color: white;
+    cursor: pointer;
+}
+
+
 /* Advent calendar styles */
 #adventCalendarContainer {
     padding: 20px;

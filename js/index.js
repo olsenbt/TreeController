@@ -1,10 +1,50 @@
 let currentPage = null;
-let debouncedSetLights = debounce(setLights, 300); // Adjust delay as needed
-let adventContents = []; // Will be loaded from adventContents.json
+let debouncedSetLights = debounce(setLights, 300);
+let adventContents = [];
+const MAX_COLORS = 5;
+let selectedColors = [];
+let activeColorIndex = 0;
+const debouncedSendColors = debounce(sendColorsToApi, 300);
+
+// Move renderColorSlots outside of DOMContentLoaded so it's always accessible
+function renderColorSlots() {
+  const container = document.getElementById("colorSlots");
+  if (!container) return; // Guard in case element doesn't exist yet
+  
+  container.innerHTML = "";
+
+  const slotCount = Math.min(selectedColors.length + 1, MAX_COLORS);
+
+  for (let i = 0; i < slotCount; i++) {
+    const slot = document.createElement("div");
+    slot.classList.add("color-slot");
+
+    if (selectedColors[i]) {
+      slot.classList.add("filled");
+      slot.style.backgroundColor = `#${selectedColors[i]}`;
+    }
+
+    if (i === activeColorIndex) {
+      slot.classList.add("active");
+    }
+
+    slot.addEventListener("click", () => {
+      activeColorIndex = i;
+      renderColorSlots();
+    });
+
+    container.appendChild(slot);
+  }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
   currentPage = localStorage.getItem('password') ? document.getElementById('buttonsPage') : document.getElementById('loginPage');
   showPage(currentPage.id);
+
+  // Initialize color slots if logged in
+  if (localStorage.getItem('password')) {
+    renderColorSlots();
+  }
 
   // Add event listener to login form
   var loginForm = document.getElementById('login-form');
@@ -12,10 +52,10 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault();
     var password = document.getElementById('password').value;
     localStorage.setItem('password', password);
+    renderColorSlots();
     showPage('buttonsPage');
   });
 
-  //
   let buttonsPage = document.getElementById('buttonsPage').querySelectorAll('button');
 
   buttonsPage.forEach(function (button) {
@@ -37,6 +77,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  document.getElementById("clearColorsBtn").addEventListener("click", () => {
+    selectedColors = [];
+    activeColorIndex = 0;
+    renderColorSlots();
+  });
+
   // Load Pokemon Page
   loadPokemonSprites();
   let searchBar = document.getElementById('searchBar');
@@ -45,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
   let randomButton = document.getElementById('randomPokemon');
 
   document.body.addEventListener('click', function (event) {
-    // Check if the click event target is not the clear button or its descendant
     if (currentPage == 'pokemonPage' && event.target !== randomButton &&
       !randomButton.contains(event.target)) {
       if (!event.target.closest(".card")) {
@@ -58,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var buttons = document.querySelectorAll('.nav-item');
   buttons.forEach(function (button) {
     button.addEventListener('click', function () {
-      // Reset color for all buttons
       buttons.forEach(function (otherButton) {
         let otherPageValue = otherButton.getAttribute('data-page');
         otherButton.querySelectorAll('img')[0].src = "assets/" + otherPageValue + "Empty.svg";
@@ -67,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
       let dataPageValue = this.getAttribute('data-page');
       this.querySelectorAll('img')[0].src = "assets/" + dataPageValue + "Full.svg";
 
-      // Set the clicked button to active
       this.classList.add('active');
 
       currentPage = this.getAttribute('data-page');
@@ -81,35 +124,53 @@ document.addEventListener('DOMContentLoaded', function () {
     borderWidth: 1,
     borderColor: '#fff',
     layout: [{
-        component: iro.ui.Wheel
-      },
-      {
-        component: iro.ui.Slider,
-        options: {
-          sliderType: 'value'
-        }
+      component: iro.ui.Wheel
+    },
+    {
+      component: iro.ui.Slider,
+      options: {
+        sliderType: 'value'
       }
+    }
     ],
-    color: "#ff0000" // Default color
+    color: "#ff0000"
   });
 
-  // Event listener for color changes
-
-
+  // Event listener for color changes (while dragging - just visual preview)
   colorPicker.on('color:change', function (color) {
-    // Make an API call to set the lights
-    debouncedSetLights(color.rgb.r, color.rgb.g, color.rgb.b);
+    const hex = color.hexString.replace("#", "");
+    
+    // Just update the current slot color, don't add new slots yet
+    selectedColors[activeColorIndex] = hex;
+    renderColorSlots();
+  });
+
+  // Fires when ANY input is released (wheel or slider)
+  colorPicker.on('input:end', function (color) {
+    const hex = color.hexString.replace("#", "");
+    
+    // Update the current slot
+    selectedColors[activeColorIndex] = hex;
+
+    // Move to next slot if we just filled the last one and haven't hit max
+    if (
+      activeColorIndex === selectedColors.length - 1 &&
+      selectedColors.length < MAX_COLORS
+    ) {
+      activeColorIndex++;
+    }
+
+    renderColorSlots();
+    debouncedSendColors();
   });
 
   // Event listener for darkness slider changes
   colorPicker.on('input:change', function (color) {
-    // Check if color object is defined
     if (color && color._color && typeof color._color.v !== 'undefined') {
-      // Synchronize the darkness slider with the color wheel
-      var brightness = 1 - color._color.v; // Invert the darkness value
+      var brightness = 1 - color._color.v;
       colorPicker.color.set({
         v: brightness
-      }); // Set the brightness value
+      });
     }
   });
 
@@ -120,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var apiUrl = 'https://api.bennettolsen.us/status';
 
-  // Send a GET request to the updated API endpoint
   fetch(apiUrl)
     .then(response => {
       if (!response.ok) {
@@ -143,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
       console.error(error);
       alert(`Error executing Set Lights script: ${error.message}`);
     });
-  // Initialize advent calendar and render any unlocked advent effects
+
   try {
     loadAdventContents().then(() => {
       initAdvent();
@@ -154,12 +214,40 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
+function sendColorsToApi() {
+  clearActive();
+
+  // Filter out empty slots to get only filled colors
+  const colors = selectedColors.filter(Boolean);
+  
+  if (colors.length === 0) return;
+
+  // Always use set_colors endpoint for consistency
+  let apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}`;
+  colors.forEach((color, i) => {
+    apiUrl += `&color${i + 1}=${color}`;
+  });
+
+  fetch(apiUrl)
+    .then(r => {
+      if (!r.ok) {
+        throw new Error(`Error: ${r.status}`);
+      }
+      return r.text();
+    })
+    .then(result => {
+      console.log(result);
+    })
+    .catch(error => {
+      console.error(error);
+      alert(`Error setting colors: ${error.message}`);
+    });
+}
+
 function setLights(r, g, b) {
   clearActive();
-  // Update the apiUrl with the new API endpoint and IP address
   var apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
 
-  // Send a GET request to the updated API endpoint
   fetch(apiUrl)
     .then(response => {
       if (!response.ok) {
@@ -178,10 +266,8 @@ function setLights(r, g, b) {
 
 function setLights2(r, g, b) {
   clearActive();
-  // Update the apiUrl with the new API endpoint and IP address
   var apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=${r}&g=${g}&b=${b}`;
 
-  // Send a GET request to the updated API endpoint
   fetch(apiUrl)
     .then(response => {
       if (!response.ok) {
@@ -220,11 +306,11 @@ function showPage(pageId) {
   });
 
   if (pageId === 'pokemonPage') {
-    searchBar.style.display = 'block'; // Show the searchBar
-    randomPokemon.style.display = 'block'; // Show the randomPokemon button
+    searchBar.style.display = 'block';
+    randomPokemon.style.display = 'block';
   } else {
-    searchBar.style.display = 'none'; // Hide the searchBar
-    randomPokemon.style.display = 'none'; // Hide the randomPokemon button
+    searchBar.style.display = 'none';
+    randomPokemon.style.display = 'none';
   }
 
   var navbar = document.getElementById('navbar');
@@ -232,11 +318,10 @@ function showPage(pageId) {
 }
 
 function runScript(scriptName) {
-  // Update the apiUrl with the new API endpoint and IP address
   let apiUrl = `https://api.bennettolsen.us/run_script?password=${localStorage.getItem('password')}&script=${scriptName}`;
 
   if (scriptName == "warm") {
-    apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=215&g=185&b=50`; //185, 215, 50
+    apiUrl = `https://api.bennettolsen.us/set_lights?password=${localStorage.getItem('password')}&r=215&g=185&b=50`;
   } else if (scriptName == "red_green") {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=00ff00&color2=ff0000`;
   } else if (scriptName == "huskies") {
@@ -257,7 +342,6 @@ function runScript(scriptName) {
     apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=FF5100&color2=0F3BFF&color3=FF0A0A&color4=FF000D&color5=31FF26`;
   }
 
-  // Send a GET request to the updated API endpoint
   fetch(apiUrl)
     .then(response => {
       if (!response.ok) {
@@ -275,7 +359,6 @@ function runScript(scriptName) {
 }
 
 function showLoginPage() {
-  // Show the login page and hide other content
   document.getElementById('navbar').style.display = 'none';
   var pages = document.querySelectorAll('[id$="Page"]');
   pages.forEach(function (page) {
@@ -295,12 +378,10 @@ function clearActive() {
   });
 }
 
-// global variables
-let pokemonImgs = null; // Stores all pokemon images
-let allPokemonData = []; // New array to store original Pokémon data
-let selectedPokemonId = null; // Variable to store the currently selected Pokémon ID
+let pokemonImgs = null;
+let allPokemonData = [];
+let selectedPokemonId = null;
 
-// Function that loads all Pokémon sprites from JSON file and stores them in an object.
 async function loadPokemonSprites() {
   const totalPokemon = 1025;
   const pokedex = document.getElementById("pokedex");
@@ -324,7 +405,6 @@ async function loadPokemonSprites() {
   }
 }
 
-// Filters pokemon based on the search term
 function filterPokemon() {
   const searchBar = document.getElementById('searchBar');
   const searchTerm = searchBar.value.toLowerCase();
@@ -343,29 +423,27 @@ function filterPokemon() {
   });
 }
 
-// API call to get pokemon data for a specific pokemon
 async function getPokemonData(pokemonId) {
   const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
   const data = await response.json();
   return data;
 }
 
-// Generates HTML elements for a single pokedex entry
 function genPokedexEntry(pokemon) {
-  let pokedexEntry = document.createElement('div'); // grid_item
+  let pokedexEntry = document.createElement('div');
   pokedexEntry.classList.add("grid_item");
   pokedexEntry.setAttribute('id', pokemon.id);
 
-  let card = document.createElement('div'); // card
+  let card = document.createElement('div');
   card.classList.add("card");
 
-  let pokemonImg = document.createElement('img'); // card_img
+  let pokemonImg = document.createElement('img');
   pokemonImg.src = pokemon.sprites.front_default;
 
-  let cardContent = document.createElement('div'); // card_content
+  let cardContent = document.createElement('div');
   cardContent.classList.add("card_content");
 
-  let pokemonName = document.createElement('p'); // card_text
+  let pokemonName = document.createElement('p');
   pokemonName.innerHTML = capitalizeFirstLetter(pokemon.name);
   pokemonName.classList.add("card_text");
 
@@ -377,21 +455,17 @@ function genPokedexEntry(pokemon) {
   return pokedexEntry;
 }
 
-// Helper function to capitalize first letter of a string
 function capitalizeFirstLetter(string) {
   return string.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function handlePokemonClick(id) {
   clearActive();
-  // Remove the highlight from the previously selected Pokémon button
   highlightSelectedPokemon(null);
 
-  // Read the color information from the pokemonColors.json file
   fetch('pokemonColors.json')
     .then(response => response.json())
     .then(pokemonColors => {
-      // Get the color information for the clicked Pokémon ID
       const colors = pokemonColors[id].map(color => color.replace('#', ''));
 
       const apiUrl = `https://api.bennettolsen.us/set_colors?password=${localStorage.getItem('password')}&color1=${colors[0]}&color2=${colors[1]}&color3=${colors[2]}`;
@@ -404,13 +478,12 @@ function handlePokemonClick(id) {
           return apiResponse.text();
         })
         .then(responseText => {
-          console.log(responseText); // Log the response from the server
+          console.log(responseText);
         })
         .catch(error => {
           console.error('Error making API request:', error);
         });
 
-      // Highlight the clicked Pokémon button
       highlightSelectedPokemon(id);
     })
     .catch(error => {
@@ -421,50 +494,41 @@ function handlePokemonClick(id) {
 function chooseRandomPokemon() {
   const pokedex = document.getElementById('pokedex');
 
-  // Clear existing Pokémon entries
   while (pokedex.firstChild) {
     pokedex.removeChild(pokedex.firstChild);
   }
 
-  // Choose a random Pokémon from the original data
   const randomIndex = Math.floor(Math.random() * allPokemonData.length);
   const randomPokemon = allPokemonData[randomIndex];
 
-  // Display the randomly chosen Pokémon
   let pokedexEntry = genPokedexEntry(randomPokemon);
   pokedexEntry.addEventListener('click', () => handlePokemonClick(randomPokemon.id));
   pokedex.appendChild(pokedexEntry);
 
-  // Scroll to the selected Pokémon
   pokedexEntry.scrollIntoView({
     behavior: 'smooth'
   });
 
-  // Update the search bar value
-  document.getElementById('searchBar').value = ''; // Clear the search bar
+  document.getElementById('searchBar').value = '';
 
-  // Highlight the selected Pokémon button
   highlightSelectedPokemon(randomPokemon.id);
 }
 
 function highlightSelectedPokemon(pokemonId) {
-  // Remove the highlight from the previously selected Pokémon button
   if (selectedPokemonId !== null) {
     const prevSelectedButton = document.getElementById(selectedPokemonId);
     if (prevSelectedButton) {
-      prevSelectedButton.style.backgroundColor = ''; // Remove the background color
+      prevSelectedButton.style.backgroundColor = '';
     }
   }
 
-  // Highlight the current selected Pokémon button
   const selectedButton = document.getElementById(pokemonId);
   if (selectedButton) {
-    selectedButton.style.backgroundColor = '#3f7539'; // Set the background color as desired
-    selectedPokemonId = pokemonId; // Update the selected Pokémon ID
+    selectedButton.style.backgroundColor = '#3f7539';
+    selectedPokemonId = pokemonId;
   }
 }
 
-/* Advent calendar logic */
 async function loadAdventContents() {
   try {
     const response = await fetch('adventContents.json');
@@ -496,7 +560,6 @@ function saveOpenedDays(days) {
 function initAdvent() {
   buildAdventGrid();
 
-  // Modal controls
   const unlockBtn = document.getElementById('adventUnlockBtn');
   const closeBtn = document.getElementById('adventCloseBtn');
 
@@ -549,9 +612,7 @@ function buildAdventGrid() {
 }
 
 function isDayUnlocked(day) {
-  // Check today's date: December days are allowed on or before current date in December
   const now = new Date();
-  // Allow override for testing via localStorage 'advent_override' as YYYY-MM-DD
   const override = localStorage.getItem('advent_override');
   let today = now;
   if (override) {
@@ -559,7 +620,6 @@ function isDayUnlocked(day) {
     if (!isNaN(o.getTime())) today = o;
   }
 
-  // Month is 0-based; December is 11
   if (today.getMonth() === 11) {
     return today.getDate() >= day;
   }
@@ -605,26 +665,20 @@ function unlockDay(day) {
   const opened = loadOpenedDays();
   if (opened.indexOf(day) === -1) {
     opened.push(day);
-    opened.sort((a,b)=>a-b);
+    opened.sort((a, b) => a - b);
     saveOpenedDays(opened);
   }
 
-  // Update grid and effects
   buildAdventGrid();
   renderAdventEffectsGroup();
-
-  // Optionally auto-run the effect on unlock
-  // runScript(`advent${day}`);
 }
 
 function renderAdventEffectsGroup() {
   const buttonsPage = document.getElementById('buttonsPage');
   if (!buttonsPage) return;
 
-  // Remove any existing advent buttons
   buttonsPage.querySelectorAll('.advent-effect-button').forEach(btn => btn.remove());
 
-  // Add unlocked advent buttons directly to the main buttons page
   const opened = loadOpenedDays();
   opened.forEach(day => {
     const content = getAdventContent(day);
